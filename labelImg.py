@@ -7,6 +7,7 @@ import platform
 import re
 import sys
 import subprocess
+from video2frames import VideoFrame
 
 from functools import partial
 from collections import defaultdict
@@ -47,7 +48,8 @@ from libs.ustr import ustr
 from libs.version import __version__
 from libs.hashableQListWidgetItem import HashableQListWidgetItem
 
-__appname__ = 'labelImg'
+# __appname__ = 'labelImg'
+__appname__ = 'labelVideo'
 
 # Utility functions and classes.
 
@@ -209,7 +211,7 @@ class MainWindow(QMainWindow, WindowMixin):
         quit = action(getStr('quit'), self.close,
                       'Ctrl+Q', 'quit', getStr('quitApp'))
 
-        open = action(getStr('openFile'), self.openFile,
+        open = action(getStr('openFile'), self.openVideo,
                       'Ctrl+O', 'open', getStr('openFileDetail'))
 
         opendir = action(getStr('openDir'), self.openDirDialog,
@@ -1278,6 +1280,25 @@ class MainWindow(QMainWindow, WindowMixin):
             if isinstance(filename, (tuple, list)):
                 filename = filename[0]
             self.loadFile(filename)
+
+    def openVideo(self):
+        if not self.mayContinue():
+            return
+        path = os.path.dirname(ustr(self.filePath)) if self.filePath else '.'
+        formats = ['*.%s' % fmt for fmt in ['h264','mp4']]
+        filters = "Video files (%s)" % ' '.join(formats)
+        filename = QFileDialog.getOpenFileName(self, '%s - Choose Video' % __appname__, path, filters)
+        if filename:
+            if isinstance(filename, (tuple, list)):
+                filename = filename[0]
+            frames_saved_dir = "frames/" + str(filename).split('/')[-1].split('.')[0] + "/"
+            if os.path.exists(frames_saved_dir):
+                self.importDirImages(frames_saved_dir)
+            else:
+                print(filename)
+                video2frame = VideoFrame(filename)
+                video2frame.split()
+                self.importDirImages(frames_saved_dir)
 
     def saveFile(self, _value=False):
         if self.defaultSaveDir is not None and len(ustr(self.defaultSaveDir)):
