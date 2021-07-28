@@ -84,9 +84,14 @@ class WindowMixin(object):
 class MainWindow(QMainWindow, WindowMixin):
     FIT_WINDOW, FIT_WIDTH, MANUAL_ZOOM = list(range(3))
 
-    def __init__(self, defaultFilename=None, defaultPrefdefClassFile=None, defaultSaveDir=None):
+    def __init__(self,PersonName=None,VideoDate=None,SceneNumber=None,defaultFilename=None,defaultPrefdefClassFile=None,defaultSaveDir=None):
         super(MainWindow, self).__init__()
         self.setWindowTitle(__appname__)
+
+        # 设定打标文件命名格式
+        self.PersonName = PersonName if PersonName is not None else 'ljt'
+        self.VideoDate = VideoDate if VideoDate is not None else '2021-07-19-10-08-04'
+        self.SceneNumber = SceneNumber if SceneNumber is not None else '002'
 
         # Load setting in the main thread
         self.settings = Settings()
@@ -109,6 +114,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.dirname = None
         self.labelHist = []
         self.lastOpenDir = None
+        self.video_dir = None
 
         # Whether we need to save or not.
         self.dirty = False
@@ -711,9 +717,8 @@ class MainWindow(QMainWindow, WindowMixin):
     def LabelFileitemDoubleClicked(self, item=None):
         currIndex = self.labelImgList.index(ustr(item.text()))
         if currIndex < len(self.labelImgList):
-            filename = self.labelImgList[currIndex]
-            savedDir = os.path.splitext(os.path.basename(filename))[0].split('_')[0]
-            filename = os.path.abspath(os.path.join('frames', savedDir, os.path.basename(filename)))
+            filename = self.labelImgList[currIndex]  # 双击的文件路径
+            filename = os.path.abspath(os.path.join('frames', self.video_dir, os.path.basename(filename)))
             if filename:
                 self.loadFile(filename)
 
@@ -1317,6 +1322,7 @@ class MainWindow(QMainWindow, WindowMixin):
         targetDirPath = ustr(QFileDialog.getExistingDirectory(self,
                                                      '%s - Open Directory' % __appname__, defaultOpenDirPath,
                                                      QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks))
+        self.video_dir = os.path.basename(targetDirPath)
         self.importDirImages(targetDirPath)
         self.importLabeledImages()
 
@@ -1436,6 +1442,7 @@ class MainWindow(QMainWindow, WindowMixin):
             if isinstance(filename, (tuple, list)):
                 filename = filename[0]
             frames_saved_dir = "frames/" + str(filename).split('/')[-1].split('.')[0] + "/"
+            self.video_dir = str(filename).split('/')[-1].split('.')[0]
             if os.path.exists(frames_saved_dir):
                 self.importDirImages(frames_saved_dir)
                 self.importLabeledImages()
@@ -1449,7 +1456,7 @@ class MainWindow(QMainWindow, WindowMixin):
                 shutil.rmtree(xml_path)
                 os.mkdir(img_path)
                 os.mkdir(xml_path)
-                video2frame = VideoFrame(filename)
+                video2frame = VideoFrame(filename,self.PersonName,self.VideoDate,self.SceneNumber)
                 video2frame.split()
                 self.importDirImages(frames_saved_dir)
 
@@ -1458,17 +1465,21 @@ class MainWindow(QMainWindow, WindowMixin):
             if self.filePath:
                 imgFileName = os.path.basename(self.filePath)
                 savedFileName = os.path.splitext(imgFileName)[0]
-                savedPath = os.path.join(ustr(self.defaultSaveDir), savedFileName)
+                format_name = self.PersonName + '_' + self.VideoDate + '_' + self.SceneNumber \
+                              + '_' + savedFileName.split('_')[-1].rjust(5, '0')
+                savedPath = os.path.join(ustr(self.defaultSaveDir), format_name)
                 self._saveFile(savedPath)
-                shutil.copyfile(self.filePath, os.path.join(self.labelImgDir, imgFileName))
+                shutil.copyfile(self.filePath, os.path.join(self.labelImgDir, format_name + '.jpg'))
         else:
             imgFileDir = os.path.dirname(self.filePath)
             imgFileName = os.path.basename(self.filePath)
             savedFileName = os.path.splitext(imgFileName)[0]
-            savedPath = os.path.join(imgFileDir, savedFileName)
+            format_name = self.PersonName + '_' + self.VideoDate + '_' + self.SceneNumber \
+                          + '_' + savedFileName.split('_')[-1].rjust(5, '0')
+            savedPath = os.path.join(imgFileDir, format_name)
             self._saveFile(savedPath if self.labelFile
                            else self.saveFileDialog(removeExt=False))
-            shutil.copyfile(self.filePath, os.path.join(self.labelImgDir, imgFileName))
+            shutil.copyfile(self.filePath, os.path.join(self.labelImgDir, format_name +  '.jpg'))
         self.importLabeledImages()
 
     def saveFileAs(self, _value=False):
@@ -1636,11 +1647,15 @@ def get_main_app(argv=[]):
     app.setWindowIcon(newIcon("app"))
     # Tzutalin 201705+: Accept extra agruments to change predefined class file
     # Usage : labelImg.py image predefClassFile saveDir
-    win = MainWindow(argv[1] if len(argv) >= 2 else None,
-                     argv[2] if len(argv) >= 3 else os.path.join(
+    win = MainWindow(argv[1] if len(argv) >=2 else None,
+                     argv[2] if len(argv) >=3 else None,
+                     argv[3] if len(argv) >=4 else None,
+                     argv[4] if len(argv) >= 5 else None,
+                     argv[5] if len(argv) >= 6 else os.path.join(
                          os.path.dirname(sys.argv[0]),
                          'data', 'predefined_classes.txt'),
-                     argv[3] if len(argv) >= 4 else None)
+                     argv[6] if len(argv) >= 7 else None
+                     )
     win.show()
     return app, win
 

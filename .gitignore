@@ -18,3 +18,4 @@ cscope*
 .vscode
 *.pkl
 /labels/
+/frames/

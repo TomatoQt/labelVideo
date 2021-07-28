@@ -12,15 +12,21 @@ class VideoFrame(object):
         "output_frames_path": "frames/",
         "start_time": 0,  # 起始时间(s)
         "end_time": 0,  # 结束时间(s)，默认全部截取
-        "output_video_size": (1920, 1080)  # (宽,高)
+        "output_video_size": (1920, 1080),  # (宽,高)
+        "person_name": "anonymous",
+        "video_date": "oneDay",
+        "scene_number": "default"
     }
 
-    def __init__(self, input_video_path=None):
+    def __init__(self, input_video_path=None, PersonName=None,Date=None,SceneNumber=None):
         if input_video_path:
             self._defalts["input_video_path"] = input_video_path
         print(self._defalts["input_video_path"])
         self._defalts["output_frames_path"] = 'frames/' + \
                                               str(self._defalts["input_video_path"]).split('/')[-1].split('.')[0] + '/'
+        self._defalts["person_name"] = PersonName if PersonName is not None else self._defalts["person_name"]
+        self._defalts["video_date"] = Date if Date is not None else self._defalts["video_date"]
+        self._defalts["scene_number"] = SceneNumber if SceneNumber is not None else self._defalts["scene_number"]
         self.__dict__.update(self._defalts)
 
     def split(self):
@@ -40,7 +46,7 @@ class VideoFrame(object):
         fps_loadedVideo = videoCapture.get(cv2.CAP_PROP_FPS)
         size_loadedVideo = (videoCapture.get(cv2.CAP_PROP_FRAME_WIDTH), videoCapture.get(cv2.CAP_PROP_FRAME_HEIGHT))
         print('FPS(Loaded):{}\nSIZE(Loaded):{}'.format(fps_loadedVideo, size_loadedVideo))
-        print('\nSIZE(OUT):{}'.format(self.output_video_size))
+        print('SIZE(OUT):{}'.format(self.output_video_size))
 
         currentFrame = start_time * fps_loadedVideo + 1  # 起始帧
 
@@ -53,8 +59,8 @@ class VideoFrame(object):
                 break
             (width, height) = self.output_video_size
             frame = frame[:, (width-height)//2-1:width-1-(width-height)//2]  # [height, width]
-            cv2.imwrite(self.output_frames_path + str(self._defalts["input_video_path"]).split('/')[-1].split('.')[0]
-                        + '_' + str(currentFrame).split('.')[0] + '.jpg', frame)
+            format_name = '{}_{}_{}_{}'.format(self.person_name,self.video_date,self.scene_number,str(currentFrame).split('.')[0].rjust(5, '0'))
+            cv2.imwrite(self.output_frames_path + format_name + '.jpg', frame)
             currentFrame += 1
 
         print('finish.')
