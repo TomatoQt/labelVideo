@@ -1441,6 +1441,14 @@ class MainWindow(QMainWindow, WindowMixin):
                 self.importLabeledImages()
             else:
                 print(filename)
+                # 清空img和xml文件夹
+                img_path = self.labelImgDir
+                xml_path = os.path.abspath('labels/xml')
+                # 打开新视频则清空labels下的img和xml文件夹
+                shutil.rmtree(img_path)
+                shutil.rmtree(xml_path)
+                os.mkdir(img_path)
+                os.mkdir(xml_path)
                 video2frame = VideoFrame(filename)
                 video2frame.split()
                 self.importDirImages(frames_saved_dir)
