@@ -1,6 +1,8 @@
 """
 视频拆分为一帧一帧的，方便打标
 """
+import random
+
 import cv2
 import os
 import shutil
@@ -15,7 +17,8 @@ class VideoFrame(object):
         "output_video_size": (1920, 1080),  # (宽,高)
         "person_name": "anonymous",
         "video_date": "oneDay",
-        "scene_number": "default"
+        "scene_number": "default",
+        "random_crop": True
     }
 
     def __init__(self, input_video_path=None, PersonName=None,Date=None,SceneNumber=None):
@@ -58,7 +61,11 @@ class VideoFrame(object):
             if end_time != 0 and (currentFrame > end_time * fps_loadedVideo + 1):
                 break
             (width, height) = self.output_video_size
-            frame = frame[:, (width-height)//2-1:width-1-(width-height)//2]  # [height, width]
+            if self.random_crop:  # 随机裁剪
+                left_index = random.randrange(0, width-height+1)  # [left,right)
+                frame = frame[:, left_index:left_index+height]  # [height, width]
+            else:
+                frame = frame[:, (width-height)//2-1:width-1-(width-height)//2]  # [height, width]
             format_name = '{}_{}_{}_{}'.format(self.person_name,self.video_date,self.scene_number,str(currentFrame).split('.')[0].rjust(5, '0'))
             cv2.imwrite(self.output_frames_path + format_name + '.jpg', frame)
             currentFrame += 1
