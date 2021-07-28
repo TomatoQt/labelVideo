@@ -718,6 +718,7 @@ class MainWindow(QMainWindow, WindowMixin):
         currIndex = self.labelImgList.index(ustr(item.text()))
         if currIndex < len(self.labelImgList):
             filename = self.labelImgList[currIndex]  # 双击的文件路径
+            self.video_dir = self.video_dir if self.video_dir is not None else self.lastOpenDir
             filename = os.path.abspath(os.path.join('frames', self.video_dir, os.path.basename(filename)))
             if filename:
                 self.loadFile(filename)
@@ -1322,8 +1323,12 @@ class MainWindow(QMainWindow, WindowMixin):
         targetDirPath = ustr(QFileDialog.getExistingDirectory(self,
                                                      '%s - Open Directory' % __appname__, defaultOpenDirPath,
                                                      QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks))
-        self.video_dir = os.path.basename(targetDirPath)
-        self.importDirImages(targetDirPath)
+        if targetDirPath is not '':
+            self.video_dir = os.path.basename(targetDirPath)
+            self.importDirImages(targetDirPath)
+        else:
+            self.video_dir = self.settings.get(SETTING_LAST_OPEN_DIR)
+            self.importDirImages(self.video_dir)
         self.importLabeledImages()
 
     def importDirImages(self, dirpath):
@@ -1441,13 +1446,15 @@ class MainWindow(QMainWindow, WindowMixin):
         if filename:
             if isinstance(filename, (tuple, list)):
                 filename = filename[0]
-            frames_saved_dir = "frames/" + str(filename).split('/')[-1].split('.')[0] + "/"
-            self.video_dir = str(filename).split('/')[-1].split('.')[0]
+            if filename is not '':
+                frames_saved_dir = "frames/" + str(filename).split('/')[-1].split('.')[0] + "/"
+            else:
+                frames_saved_dir = self.settings.get(SETTING_LAST_OPEN_DIR)
+            self.video_dir = os.path.basename(os.path.abspath(frames_saved_dir))
             if os.path.exists(frames_saved_dir):
                 self.importDirImages(frames_saved_dir)
                 self.importLabeledImages()
             else:
-                print(filename)
                 # 清空img和xml文件夹
                 img_path = self.labelImgDir
                 xml_path = os.path.abspath('labels/xml')
