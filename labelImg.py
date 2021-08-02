@@ -475,6 +475,9 @@ class MainWindow(QMainWindow, WindowMixin):
                                          (__appname__, self.defaultSaveDir))
             self.statusBar().show()
 
+        if self.defaultSaveDir is None:
+            self.defaultSaveDir = os.path.join(os.path.abspath('.'), 'labels', 'xml')
+
         self.restoreState(settings.get(SETTING_WIN_STATE, QByteArray()))
         Shape.line_color = self.lineColor = QColor(settings.get(SETTING_LINE_COLOR, DEFAULT_LINE_COLOR))
         Shape.fill_color = self.fillColor = QColor(settings.get(SETTING_FILL_COLOR, DEFAULT_FILL_COLOR))
@@ -1271,6 +1274,7 @@ class MainWindow(QMainWindow, WindowMixin):
     # 扫描所有已标注的图片，返回图片路径列表
     def scanAllLabels(self):
         labels = []
+        # print(self.defaultSaveDir)
         for root, dirs, files in os.walk(self.defaultSaveDir):
             for file in files:
                 if file.endswith('.xml'):
@@ -1447,7 +1451,8 @@ class MainWindow(QMainWindow, WindowMixin):
             if isinstance(filename, (tuple, list)):
                 filename = filename[0]
             if filename is not '':
-                frames_saved_dir = "frames/" + str(filename).split('/')[-1].split('.')[0] + "/"
+                # frames_saved_dir = "frames/" + str(filename).split('/')[-1].split('.')[0] + "/"
+                frames_saved_dir = os.path.join(os.path.abspath('.'), 'frames', os.path.basename(filename).split('.')[0])
             else:
                 frames_saved_dir = self.settings.get(SETTING_LAST_OPEN_DIR)
             self.video_dir = os.path.basename(os.path.abspath(frames_saved_dir))

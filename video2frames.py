@@ -2,6 +2,7 @@
 视频拆分为一帧一帧的，方便打标
 """
 import random
+import sys
 
 import cv2
 import os
@@ -25,8 +26,11 @@ class VideoFrame(object):
         if input_video_path:
             self._defalts["input_video_path"] = input_video_path
         print(self._defalts["input_video_path"])
-        self._defalts["output_frames_path"] = 'frames/' + \
-                                              str(self._defalts["input_video_path"]).split('/')[-1].split('.')[0] + '/'
+        # self._defalts["output_frames_path"] = 'frames/' + \
+        #                                       str(self._defalts["input_video_path"]).split('/')[-1].split('.')[0] + '/'
+        self._defalts["output_frames_path"] = os.path.join(os.path.abspath('.'),
+                                                           'frames',
+                                                           os.path.split(self._defalts["input_video_path"])[1].split('.')[0])
         self._defalts["person_name"] = PersonName if PersonName is not None else self._defalts["person_name"]
         self._defalts["video_date"] = Date if Date is not None else self._defalts["video_date"]
         self._defalts["scene_number"] = SceneNumber if SceneNumber is not None else self._defalts["scene_number"]
@@ -67,7 +71,8 @@ class VideoFrame(object):
             else:
                 frame = frame[:, (width-height)//2-1:width-1-(width-height)//2]  # [height, width]
             format_name = '{}_{}_{}_{}'.format(self.person_name,self.video_date,self.scene_number,str(currentFrame).split('.')[0].rjust(5, '0'))
-            cv2.imwrite(self.output_frames_path + format_name + '.jpg', frame)
+            # cv2.imwrite(self.output_frames_path + format_name + '.jpg', frame)
+            cv2.imwrite(os.path.join(self.output_frames_path, format_name + '.jpg'), frame)
             currentFrame += 1
 
         print('finish.')
